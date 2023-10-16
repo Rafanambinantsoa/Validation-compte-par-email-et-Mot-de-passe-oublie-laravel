@@ -22,3 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post("/register", [UserController::class , "registration"] );
 Route::post("/login", [UserController::class , "login"] );
 Route::post("/validate/{user}", [UserController::class , "valideUncompte"] );
+Route::post("/forgot-password", [UserController::class , "forgotPassword"] );
+Route::post("/reset-password", [UserController::class , "resetPassword"] );

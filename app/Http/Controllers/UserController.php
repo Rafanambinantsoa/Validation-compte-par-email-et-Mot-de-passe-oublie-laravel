@@ -10,6 +10,73 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
+    //traitement de la reinitialisation du mot de passe
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'password' => 'required'
+        ]);
+
+        //check if user exists
+        $user = User::where('password_reset_token', $request->token)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'User does not exist'
+            ], 401);
+        }
+
+        //update user
+        $user->update([
+            'password' => bcrypt($request->password),
+            'password_reset_token' => null,
+        ]);
+
+        return response()->json(
+            [
+                'message' => 'Mot de passe réinitialisé avec succès'
+            ],
+            200
+        );
+    }
+
+    //mot de pass oublie 
+    public function forgotPassword(Request $request)
+    {
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'User does not exist'
+            ], 401);
+        }
+        //generate  random string token
+        $randomString = bin2hex(random_bytes(16));
+
+        //update user
+        $user->update([
+            'password_reset_token' => $randomString,
+        ]);
+
+        Mail::send("mails.forgot", [
+            'token' => $randomString,
+            'user' => $user,
+        ], function ($message) use ($user) {
+            $message->to($user->email);
+            $message->subject('Réinitialisation de votre mot de passe');
+        });
+
+        // tu dois creer la vue mails.forgot dans le dossier resources/views/mails/forgot.blade.php 
+        // et  lors de la soumissions de la  tu dois utuliser le controller (resetPassword) ci dessus
+        // en recuperant ce le token dans l'url
+        // n'oublie  pas de modifier l'url dans le forgot qui se rediriger vers un pages avec la formulaire de reset
+        return response()->json(
+            [
+                'message' => 'Un lien de réinitialisation de mot de passe vous a été envoyé par email.'
+            ],
+            200
+        );
+    }
+
     //login
     public function login(Request $request)
     {
@@ -42,8 +109,7 @@ class UserController extends Controller
                 'message' => 'User logged in',
                 'token' => $token
             ], 200);
-        }
-        else {
+        } else {
             return response()->json([
                 'message' => 'Wrong password'
             ], 401);
@@ -55,7 +121,7 @@ class UserController extends Controller
     {
         if ($user->code == $request->code) {
             $user->update([
-                'code' => 00000,
+                'code' => rand(10000, 99999),
                 'status' => 1,
                 'email_verified_at' => now()
             ]);
