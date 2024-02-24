@@ -7,9 +7,65 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Socialite\Facades\Socialite;
 
 class UserController extends Controller
 {
+    public function googleCallback()
+    {
+     try{
+        $user = Socialite::driver('google')->user();
+        $user = User::firstOrCreate(
+            ['email' => $user->email],
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'password' => bcrypt('password'),
+                'status' => 1,
+                'code' => rand(10000, 99999),
+                'email_verified_at' => now()
+            ]
+        );
+        //login automatically
+        Auth::login($user);
+        //generate token
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return response()->json([
+            'message' => 'User logged'   , 
+            'token' => $token , 
+            'name' => $user->name
+        ], 200);
+     }catch(\Exception $e){
+        return response()->json([
+            'message' => 'Error' , 
+            'error' => $e->getMessage()
+        ], 401);
+     }   
+    }
+
+    public function handleGoogleLogin()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function loginGoogleForm()
+    {
+        return view("auth.login");
+    }
+
+    public function check($token)
+    {
+        $user = User::where('password_reset_token', $token)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'User does not exist'
+            ], 401);
+        }
+        return response()->json([
+            'message' => 'User exist'
+        ], 200);
+    }
+
     //traitement de la reinitialisation du mot de passe
     public function resetPassword(Request $request)
     {
@@ -164,7 +220,14 @@ class UserController extends Controller
             'code' => $token
         ]);
         //send email
-        Mail::to($request->email)->send(new ValidationEmail($token, $request->name));
+        Mail::send("mails.validation", [
+            'token' => $token,
+            'user' => $request,
+            'name' => $request->name
+        ], function ($message) use ($request) {
+            $message->to($request->email);
+            $message->subject('Réinitialisation de votre mot de passe');
+        });
 
         //return response
         return response()->json([

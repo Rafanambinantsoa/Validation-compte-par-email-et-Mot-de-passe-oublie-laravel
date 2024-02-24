@@ -24,3 +24,4 @@ Route::post("/login", [UserController::class , "login"] );
 Route::post("/validate/{user}", [UserController::class , "valideUncompte"] );
 Route::post("/forgot-password", [UserController::class , "forgotPassword"] );
 Route::post("/reset-password", [UserController::class , "resetPassword"] );
+Route::post("/password.reset/{id}", [UserController::class , "check"] );

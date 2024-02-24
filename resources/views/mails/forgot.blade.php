@@ -13,7 +13,7 @@
 
     <p>Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous.</p>
 
-    <a href="{{ url('password.reset', $token) }}">Réinitialiser mon mot de passe</a>
+    <a href="{{ url('api/password.reset', $token) }}">Réinitialiser mon mot de passe</a>
 
     <p>Ce lien expirera dans  60 minutes.</p>
 

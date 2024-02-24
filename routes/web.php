@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get("/auth/google", [UserController::class , "loginGoogleForm"] );
+Route::get("auth/google/login", [UserController::class , "handleGoogleLogin"] );
+Route::get("authGoogle/CallBack", [UserController::class , "googleCallback"] );
