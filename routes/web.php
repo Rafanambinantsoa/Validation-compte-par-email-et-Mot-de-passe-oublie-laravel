@@ -20,3 +20,5 @@ Route::get('/', function () {
 Route::get("/auth/google", [UserController::class , "loginGoogleForm"] );
 Route::get("auth/google/login", [UserController::class , "handleGoogleLogin"] );
 Route::get("authGoogle/CallBack", [UserController::class , "googleCallback"] );
+Route::get("auth/git/login", [UserController::class , "gitHandleLogin"] );
+Route::get("/auth/authGithub/CallBack", [UserController::class , "gitCallback"] );

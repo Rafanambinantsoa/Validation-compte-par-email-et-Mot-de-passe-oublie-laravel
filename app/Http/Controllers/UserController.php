@@ -11,36 +11,76 @@ use Laravel\Socialite\Facades\Socialite;
 
 class UserController extends Controller
 {
+    public function gitHandleLogin()
+    {
+        return Socialite::driver('github')->redirect();
+    }
+
+    public function gitCallback(Request $request)
+    {
+        // dd("{fhskjhfklsdjfklsdjfkl");
+        //On ajoute le stateless  ca marchera pas si on l'enleve par contre avec google ca marche de ouf
+        // dd(Socialite::driver('github')->stateless()->user());
+        try {
+            $user = Socialite::driver('github')->stateless()->user();
+            $user = User::firstOrCreate(
+                ['email' => $user->email],
+                [
+                    'name' => $user->nickname,
+                    'email' => $user->email,
+                    'password' => bcrypt('password'),
+                    'status' => 1,
+                    'code' => rand(10000, 99999),
+                    'email_verified_at' => now()
+                ]
+            );
+            //login automatically
+            Auth::login($user);
+            //generate token
+            $token = $user->createToken('auth_token')->plainTextToken;
+            return response()->json([
+                'message' => 'User logged',
+                'token' => $token,
+                'name' => $user->name
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error',
+                'error' => $e->getMessage()
+            ], 401);
+        }
+    }
+
     public function googleCallback()
     {
-     try{
-        $user = Socialite::driver('google')->user();
-        $user = User::firstOrCreate(
-            ['email' => $user->email],
-            [
-                'name' => $user->name,
-                'email' => $user->email,
-                'password' => bcrypt('password'),
-                'status' => 1,
-                'code' => rand(10000, 99999),
-                'email_verified_at' => now()
-            ]
-        );
-        //login automatically
-        Auth::login($user);
-        //generate token
-        $token = $user->createToken('auth_token')->plainTextToken;
-        return response()->json([
-            'message' => 'User logged'   , 
-            'token' => $token , 
-            'name' => $user->name
-        ], 200);
-     }catch(\Exception $e){
-        return response()->json([
-            'message' => 'Error' , 
-            'error' => $e->getMessage()
-        ], 401);
-     }   
+        try {
+            $user = Socialite::driver('google')->user();
+            $user = User::firstOrCreate(
+                ['email' => $user->email],
+                [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'password' => bcrypt('password'),
+                    'status' => 1,
+                    'code' => rand(10000, 99999),
+                    'email_verified_at' => now()
+                ]
+            );
+            //login automatically
+            Auth::login($user);
+            //generate token
+            $token = $user->createToken('auth_token')->plainTextToken;
+            return response()->json([
+                'message' => 'User logged',
+                'token' => $token,
+                'name' => $user->name
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error',
+                'error' => $e->getMessage()
+            ], 401);
+        }
     }
 
     public function handleGoogleLogin()
